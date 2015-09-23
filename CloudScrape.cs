@@ -10,7 +10,7 @@ namespace CloudScrapeAPI
     /// <summary>
     /// Cloud Response details
     /// </summary>
-    class CloudRespose
+    class CloudResponse
     {
         public string Content { get; set; }
         public WebHeaderCollection Headers { get; set; }
@@ -97,26 +97,33 @@ namespace CloudScrapeAPI
         private CloudScrapeExecutions objExecutions;
         private CloudScrapeRuns objRuns;
 
+        /// <summary>
+        /// Endpoint / base url of requests
+        /// </summary>
         public string EndPoint
         {
             get { return _endPoint; }
             set { _endPoint = value; }
         }
 
+        /// <summary>
+        /// User agent of requests
+        /// </summary>
         public string UserAgent
         {
             get { return _userAgent; }
             set { _userAgent = value; }
         }
-        
+
+        /// <summary>
+        /// Set request timeout. Defaults to 1 hour
+        /// Note: If you are using the sync methods and some requests are running for very long you need to increase this value.
+        /// </summary>
         public int RequestTimeout
         {
             get { return _requestTimeout; }
             set { _requestTimeout = value; }
         }
-
-        
-
 
         /// <summary>
         /// Constructor
@@ -138,7 +145,7 @@ namespace CloudScrapeAPI
         /// <param name="method"></param>
         /// <param name="body"></param>
         /// <returns></returns>
-        public CloudRespose Request(string url, string method = "GET", string body = null)
+        public CloudResponse Request(string url, string method = "GET", string body = null)
         {
             string userPassword = CreateMD5(accountId + apiKey).ToLower();
 
@@ -147,11 +154,12 @@ namespace CloudScrapeAPI
             req.Headers.Add("X-CloudScrape-Access", userPassword);
             req.Headers.Add("X-CloudScrape-Account", accountId);
             req.UserAgent = _userAgent;
+            req.Timeout = _requestTimeout;
             req.Accept = "application/json";
             req.ContentType = "application/json";
             req.Method = method;
 
-            CloudRespose objCloudRespose = null;
+            CloudResponse objCloudResponse = null;
             HttpWebResponse response = null;
             StreamReader readStream = null;
 
@@ -160,16 +168,16 @@ namespace CloudScrapeAPI
 
                 response = (HttpWebResponse)req.GetResponse();
 
-                objCloudRespose = new CloudRespose();
+                objCloudResponse = new CloudResponse();
 
-                objCloudRespose.statusCode = response.StatusCode;
-                objCloudRespose.Headers = response.Headers;
-                objCloudRespose.StatusDescription = response.StatusDescription;
+                objCloudResponse.statusCode = response.StatusCode;
+                objCloudResponse.Headers = response.Headers;
+                objCloudResponse.StatusDescription = response.StatusDescription;
 
                 WebHeaderCollection obj = response.Headers;
                 Stream receiveStream = response.GetResponseStream();
                 readStream = new StreamReader(receiveStream, Encoding.UTF8);
-                objCloudRespose.Content = readStream.ReadToEnd();
+                objCloudResponse.Content = readStream.ReadToEnd();
 
             }
             catch (Exception ex)
@@ -189,7 +197,7 @@ namespace CloudScrapeAPI
                 }
             }
 
-            return objCloudRespose;
+            return objCloudResponse;
         }
 
         /// <summary>
@@ -222,7 +230,7 @@ namespace CloudScrapeAPI
         /// <returns></returns>
         public string RequestJson(string url, string method = "GET", string body = null)
         {
-            CloudRespose response = this.Request(url, method, body);
+            CloudResponse response = this.Request(url, method, body);
             return response.Content;
         }
 
