@@ -92,7 +92,7 @@ namespace CloudScrapeAPI
 
         private string _endPoint = "https://app.cloudscrape.com/api/";
         private string _userAgent = "CS-ASP-CLIENT/1.0";
-        private int _requestTimeout = 3600;
+        private int _requestTimeout = 60*60*1000;
 
         private CloudScrapeExecutions objExecutions;
         private CloudScrapeRuns objRuns;
@@ -134,6 +134,7 @@ namespace CloudScrapeAPI
         {
             this.apiKey = apiKey;
             this.accountId = accountId;
+            this.accessKey = accountId + apiKey;
             this.objExecutions = new CloudScrapeExecutions(this);
             this.objRuns = new CloudScrapeRuns(this);
         }
@@ -147,7 +148,7 @@ namespace CloudScrapeAPI
         /// <returns></returns>
         public CloudResponse Request(string url, string method = "GET", string body = null)
         {
-            string userPassword = CreateMD5(accountId + apiKey).ToLower();
+            string userPassword = CreateMD5(accessKey).ToLower();
 
             var req = System.Net.HttpWebRequest.Create(EndPoint + url) as HttpWebRequest;
 
@@ -158,6 +159,15 @@ namespace CloudScrapeAPI
             req.Accept = "application/json";
             req.ContentType = "application/json";
             req.Method = method;
+
+            if (body != null)
+            {
+                using (var streamWriter = new StreamWriter(req.GetRequestStream()))
+                {
+                    streamWriter.Write(body);
+                    streamWriter.Flush();
+                }
+            }
 
             CloudResponse objCloudResponse = null;
             HttpWebResponse response = null;
@@ -436,10 +446,10 @@ namespace CloudScrapeAPI
         /// <param name="runId"></param>
         /// <param name="inputs"></param>
         /// <returns></returns>
-        public CloudScrapeExecutionDTO ExecuteWithInputSync(string runId, string inputs)
+        public CloudScrapeResultDTO ExecuteWithInputSync(string runId, string inputs)
         {
             string strResponse = this.client.RequestJson("runs/" + runId + "/execute/inputs/wait", "POST", inputs);
-            var result = jsonSerializer.Deserialize<CloudScrapeExecutionDTO>(strResponse);
+            var result = jsonSerializer.Deserialize<CloudScrapeResultDTO>(strResponse);
             return result;
         }
 
