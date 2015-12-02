@@ -132,9 +132,8 @@ namespace CloudScrapeAPI
         /// <param name="accountId"></param>
         public CloudScrapeClient(string apiKey, string accountId)
         {
-            this.apiKey = apiKey;
             this.accountId = accountId;
-            this.accessKey = accountId + apiKey;
+            this.accessKey = CreateMD5(accountId + apiKey).ToLower();
             this.objExecutions = new CloudScrapeExecutions(this);
             this.objRuns = new CloudScrapeRuns(this);
         }
@@ -148,11 +147,9 @@ namespace CloudScrapeAPI
         /// <returns></returns>
         public CloudResponse Request(string url, string method = "GET", string body = null)
         {
-            string userPassword = CreateMD5(accessKey).ToLower();
-
             var req = System.Net.HttpWebRequest.Create(EndPoint + url) as HttpWebRequest;
 
-            req.Headers.Add("X-CloudScrape-Access", userPassword);
+            req.Headers.Add("X-CloudScrape-Access", accessKey);
             req.Headers.Add("X-CloudScrape-Account", accountId);
             req.UserAgent = _userAgent;
             req.Timeout = _requestTimeout;
